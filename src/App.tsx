@@ -1,19 +1,35 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import { BerlinClockFace } from "./BerlinClockFace";
+import { TimeGuessForm, TimeInput } from "./TimeGuessForm";
 import "./App.css";
 
-function App() {
-  const [time, setTime] = useState(getRandomTime());
+interface Time {
+  hours: number;
+  mins: number;
+}
 
-  function onSubmitTimeInput(guess: Time) {
-    if (guess.hours === time.hours && guess.minutes === time.minutes) {
+function App() {
+  const [time, setTime] = useState<Time>(getRandomTime());
+  const [guess, setGuess] = useState<TimeInput>(EMPTY_TIME_INPUT);
+
+  const { flashStatus, flashSuccess, flashError } = useFlash();
+
+  function onSubmitTimeInput() {
+    const hours = parseInt(guess.hours.tens + guess.hours.units);
+    const mins = parseInt(guess.mins.tens + guess.mins.units);
+
+    if (hours === time.hours && mins === time.mins) {
       console.log({ message: "CORRECT" });
 
       setTime(getRandomTime());
+      setGuess(EMPTY_TIME_INPUT);
+      flashSuccess();
     } else {
       console.log({
-        message: `INCORRECT, guessed: ${guess.hours}:${guess.minutes}, actual: ${time.hours}:${time.minutes}`,
+        message: `INCORRECT, guessed: ${guess.hours}:${guess.mins}, actual: ${time.hours}:${time.mins}`,
       });
+
+      flashError();
     }
   }
 
@@ -22,158 +38,77 @@ function App() {
       <div className="container">
         <h1>Clock coach</h1>
 
-        <TimeInput onSubmit={onSubmitTimeInput} />
+        <TimeGuessForm
+          time={guess}
+          setTime={setGuess}
+          onSubmit={onSubmitTimeInput}
+        />
 
         <div className="clock-container">
-          <BerlinClockFace hours={time.hours} minutes={time.minutes} />
+          <BerlinClockFace hours={time.hours} minutes={time.mins} />
         </div>
       </div>
+
+      <Flash status={flashStatus} />
     </div>
   );
 }
 
-interface UseDigitFunctions {
-  onGoForward: () => void;
-  onGoBack: () => void;
+// ---- Helpers ---- //
+
+// ------ Components ------ //
+
+interface FlashProps {
+  status: FlashStatus;
 }
 
-function useDigitInput({ onGoForward, onGoBack }: UseDigitFunctions) {
-  const [digit, setDigit] = useState("0");
+type FlashStatus = "DONT_SHOW" | "SHOW_SUCCESS" | "SHOW_ERROR";
 
-  function onDigitChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const input = e.target.value;
-
-    if (!/^[0-9]*$/.test(input)) {
-      return;
-    }
-
-    // added to the left
-    if (input.length === 2 && input[0] === digit) {
-      setDigit(input[1]);
-      onGoForward();
-    }
-    // added to the right
-    else if (input.length === 2 && input[1] === digit) {
-      setDigit(input[0]);
-      onGoForward();
-    }
-    // overwritten digit
-    else if (input.length === 1) {
-      setDigit(input);
-      onGoForward();
-    }
-    // deleted digit
-    else {
-      setDigit("0");
-      onGoBack();
-    }
+function Flash({ status }: FlashProps) {
+  if (status === "DONT_SHOW") {
+    return null;
   }
 
-  return { digit, onDigitChange };
+  const className =
+    status === "SHOW_SUCCESS" ? "flash flash-success" : "flash flash-error";
+
+  return <div className={className}></div>;
 }
 
-interface TimeInputProps {
-  onSubmit: (time: Time) => void;
-}
+// ------ Hooks ------ //
 
-function TimeInput({ onSubmit }: TimeInputProps) {
-  const hoursTensRef = useRef<HTMLInputElement>(null);
-  const hoursUnitsRef = useRef<HTMLInputElement>(null);
-  const minsTensRef = useRef<HTMLInputElement>(null);
-  const minsUnitsRef = useRef<HTMLInputElement>(null);
+function useFlash() {
+  const [flashStatus, setFlashStatus] = useState<FlashStatus>("DONT_SHOW");
 
-  const { digit: hoursTens, onDigitChange: onHoursTensChange } = useDigitInput({
-    onGoForward: () => hoursUnitsRef.current?.focus(),
-    onGoBack: () => {},
-  });
-  const { digit: hoursUnits, onDigitChange: onHoursUnitsChange } =
-    useDigitInput({
-      onGoForward: () => minsTensRef.current?.focus(),
-      onGoBack: () => hoursTensRef.current?.focus(),
-    });
-  const { digit: minsTens, onDigitChange: onMinsTensChange } = useDigitInput({
-    onGoForward: () => minsUnitsRef.current?.focus(),
-    onGoBack: () => hoursUnitsRef.current?.focus(),
-  });
-  const { digit: minsUnits, onDigitChange: onMinsUnitsChange } = useDigitInput({
-    onGoForward: () => {},
-    onGoBack: () => minsTensRef.current?.focus(),
-  });
+  function flashSuccess() {
+    setFlashStatus("SHOW_SUCCESS");
 
-  useEffect(() => {
-    hoursTensRef.current?.focus();
-  }, []);
-
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-
-    onSubmit({
-      hours: parseInt(hoursTens + hoursUnits),
-      minutes: parseInt(minsTens + minsUnits),
-    });
+    setTimeout(() => setFlashStatus("DONT_SHOW"), 1000);
   }
 
-  return (
-    <div>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <input
-            ref={hoursTensRef}
-            className="time-digit"
-            pattern="[0-9]+"
-            size={1}
-            value={hoursTens}
-            onChange={onHoursTensChange}
-          />
+  function flashError() {
+    setFlashStatus("SHOW_ERROR");
 
-          <input
-            ref={hoursUnitsRef}
-            className="time-digit time-digit-right"
-            pattern="[0-9]+"
-            size={1}
-            value={hoursUnits}
-            onChange={onHoursUnitsChange}
-          />
+    setTimeout(() => setFlashStatus("DONT_SHOW"), 1000);
+  }
 
-          <span className="time-colon">:</span>
-
-          <input
-            ref={minsTensRef}
-            className="time-digit"
-            pattern="[0-9]+"
-            size={1}
-            value={minsTens}
-            onChange={onMinsTensChange}
-          />
-
-          <input
-            ref={minsUnitsRef}
-            className="time-digit time-digit-right"
-            pattern="[0-9]+"
-            size={1}
-            value={minsUnits}
-            onChange={onMinsUnitsChange}
-          />
-        </div>
-
-        <div className="submit-container">
-          <button type="submit">Submit</button>
-        </div>
-      </form>
-    </div>
-  );
+  return { flashStatus, flashSuccess, flashError };
 }
 
-interface Time {
-  hours: number;
-  minutes: number;
-}
+// ------ Functions ------ //
 
 function getRandomTime(): Time {
   const hours = Math.floor(Math.random() * 24);
-  const minutes = Math.floor(Math.random() * 60);
+  const mins = Math.floor(Math.random() * 60);
 
-  return { hours, minutes };
+  return { hours, mins };
 }
+
+// ------ Constants ------ //
+
+const EMPTY_TIME_INPUT: TimeInput = {
+  hours: { tens: "0", units: "0" },
+  mins: { tens: "0", units: "0" },
+};
 
 export default App;
