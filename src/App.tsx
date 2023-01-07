@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import "./App.css";
 import { BerlinClockFace } from "./BerlinClockFace";
+import "./App.css";
 
 function App() {
   const [time, setTime] = useState(getRandomTime());
@@ -18,13 +18,15 @@ function App() {
   }
 
   return (
-    <div className="App">
-      <h1>Clock coach</h1>
+    <div className="app">
+      <div className="container">
+        <h1>Clock coach</h1>
 
-      <TimeInput onSubmit={onSubmitTimeInput} />
+        <TimeInput onSubmit={onSubmitTimeInput} />
 
-      <div style={{ width: 500 }}>
-        <BerlinClockFace hours={time.hours} minutes={time.minutes} />
+        <div className="clock-container">
+          <BerlinClockFace hours={time.hours} minutes={time.minutes} />
+        </div>
       </div>
     </div>
   );
