@@ -1,0 +1,15 @@
+{
+  "files": {
+    "main.css": "/clock-coach/static/css/main.2712375c.css",
+    "main.js": "/clock-coach/static/js/main.4dbd90ba.js",
+    "static/js/787.4127866f.chunk.js": "/clock-coach/static/js/787.4127866f.chunk.js",
+    "index.html": "/clock-coach/index.html",
+    "main.2712375c.css.map": "/clock-coach/static/css/main.2712375c.css.map",
+    "main.4dbd90ba.js.map": "/clock-coach/static/js/main.4dbd90ba.js.map",
+    "787.4127866f.chunk.js.map": "/clock-coach/static/js/787.4127866f.chunk.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.2712375c.css",
+    "static/js/main.4dbd90ba.js"
+  ]
+}
